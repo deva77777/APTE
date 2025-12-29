@@ -263,6 +263,54 @@
 
         <aside class="space-y-4">
           <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <h3 class="text-sm font-semibold text-slate-200">Magic prompt enhancer (OpenRouter)</h3>
+            <p class="mt-2 text-sm text-slate-300">Turn a simple prompt into a structured, model-friendly prompt + negative prompt + suggested settings.</p>
+
+            <div class="mt-3 grid gap-3">
+              <div>
+                <label class="text-xs text-slate-300">OpenRouter API key</label>
+                <input id="orKey" type="password" class="ring-focus mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="sk-or-..." />
+                <p class="mt-1 text-xs text-slate-400">Stored only in your browser (localStorage). For production, proxy on a server.</p>
+              </div>
+
+              <div>
+                <label class="text-xs text-slate-300">Model</label>
+                <select id="orModel" class="ring-focus mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm">
+                  <option value="qwen/qwen-2.5-vl-7b-instruct:free">qwen/qwen-2.5-vl-7b-instruct:free (recommended)</option>
+                  <option value="google/gemini-2.0-flash-exp:free">google/gemini-2.0-flash-exp:free</option>
+                  <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct:free</option>
+                  <option value="mistralai/mistral-small-3.1-24b-instruct:free">mistralai/mistral-small-3.1-24b-instruct:free</option>
+                  <option value="deepseek/deepseek-r1-0528:free">deepseek/deepseek-r1-0528:free</option>
+                </select>
+                <p class="mt-1 text-xs text-slate-400">Use VL models if you later want “analyze the image → improve prompt”.</p>
+              </div>
+
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex items-center gap-2 text-xs text-slate-300">
+                  <input id="orIncludeTerm" type="checkbox" class="accent-sky-400" checked />
+                  Include selected glossary term context
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-300">
+                  <input id="orPreferSDXL" type="checkbox" class="accent-sky-400" checked />
+                  Optimize for SDXL/Stable Diffusion
+                </label>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <button id="enhanceBtn" class="rounded-xl bg-sky-500/15 px-3 py-2 text-sm font-semibold hover:bg-sky-500/25 border border-sky-400/30">Enhance prompt</button>
+                <button id="useEnhancedBtn" class="rounded-xl bg-violet-500/15 px-3 py-2 text-sm font-semibold hover:bg-violet-500/25 border border-violet-400/30">Replace editor prompt</button>
+                <button id="copyEnhancedBtn" class="rounded-xl bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/10">Copy enhanced</button>
+              </div>
+
+              <div>
+                <label class="text-xs text-slate-300">Enhanced output</label>
+                <textarea id="enhancedOut" class="ring-focus mt-1 w-full min-h-[130px] rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="Enhanced prompt, Negative prompt, and suggested settings will appear here..."></textarea>
+                <p class="mt-2 text-xs text-slate-400">We ask the model to return JSON. If the provider returns plain text, we still paste it here.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
             <h3 class="text-sm font-semibold text-slate-200">Prompt cues detected</h3>
             <div id="promptChips" class="mt-3 flex flex-wrap gap-2"></div>
             <p class="mt-2 text-xs text-slate-400">We map common words like “cinematic”, “grain”, “vignette”, “teal/orange”, “low-key” to local effects.</p>
@@ -1664,6 +1712,150 @@
     // -----------------------------
     // Edit tab (local, non-generative)
     // -----------------------------
+
+    // -----------------------------
+    // Magic Prompt Enhancer (OpenRouter)
+    // -----------------------------
+    const OR_KEY_STORAGE = 'ai-photo-terms:openrouter:key:v1';
+    const OR_MODEL_STORAGE = 'ai-photo-terms:openrouter:model:v1';
+
+    const orEls = {
+      key: document.getElementById('orKey'),
+      model: document.getElementById('orModel'),
+      includeTerm: document.getElementById('orIncludeTerm'),
+      preferSDXL: document.getElementById('orPreferSDXL'),
+      enhanceBtn: document.getElementById('enhanceBtn'),
+      useEnhancedBtn: document.getElementById('useEnhancedBtn'),
+      copyEnhancedBtn: document.getElementById('copyEnhancedBtn'),
+      out: document.getElementById('enhancedOut')
+    };
+
+    function loadOpenRouterPrefs() {
+      try {
+        const k = localStorage.getItem(OR_KEY_STORAGE) || '';
+        if (orEls.key) orEls.key.value = k;
+      } catch {}
+      try {
+        const m = localStorage.getItem(OR_MODEL_STORAGE) || '';
+        if (orEls.model && m) orEls.model.value = m;
+      } catch {}
+    }
+
+    function saveOpenRouterPrefs() {
+      try {
+        if (orEls.key) localStorage.setItem(OR_KEY_STORAGE, orEls.key.value || '');
+      } catch {}
+      try {
+        if (orEls.model) localStorage.setItem(OR_MODEL_STORAGE, orEls.model.value || '');
+      } catch {}
+    }
+
+    async function openRouterEnhance(rawPrompt) {
+      const apiKey = (orEls.key?.value || '').trim();
+      if (!apiKey) throw new Error('Missing OpenRouter API key');
+
+      const model = orEls.model?.value || 'qwen/qwen-2.5-vl-7b-instruct:free';
+      const t = (orEls.includeTerm?.checked && currentTerm()) ? currentTerm() : null;
+      const preferSDXL = !!orEls.preferSDXL?.checked;
+
+      const system = `You are a prompt engineer for AI image generation.\n\nGoal: Convert a user's simple prompt into a high-quality, structured prompt for image generation.\nReturn STRICT JSON only (no markdown).\n\nJSON schema:\n{\n  "enhanced_prompt": string,\n  "negative_prompt": string,\n  "settings": {\n    "model_family": "SDXL"|"SD1.5"|"Midjourney"|"Unknown",\n    "suggested_aspect_ratio": string,\n    "suggested_steps": number,\n    "suggested_cfg": number,\n    "suggested_denoise": number\n  },\n  "notes": string\n}\n\nRules:\n- Keep enhanced_prompt concise but specific: subject + environment + lighting + lens + composition + style.\n- Negative prompt: only common artifacts; keep under ~30 tokens.\n- If unsure about settings, provide reasonable defaults.\n- Never include unsafe content.\n`;
+
+      const termContext = t ? `Selected glossary term:\n- term: ${t.term}\n- what: ${t.what}\n- how: ${t.how}\n- example fragments: ${(t.examples||[]).join(' | ')}\n` : '';
+      const userMsg = `User prompt:\n${rawPrompt}\n\n${preferSDXL ? 'Optimize for SDXL / Stable Diffusion prompt style.' : ''}\n${termContext}`;
+
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'AI Photography Terminology Explorer'
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userMsg }
+          ],
+          temperature: 0.6,
+          max_tokens: 650
+        })
+      });
+
+      if (!res.ok) {
+        let detail = '';
+        try { detail = await res.text(); } catch {}
+        throw new Error(`OpenRouter error ${res.status}: ${detail || res.statusText}`);
+      }
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('No content returned from model');
+      return String(content).trim();
+    }
+
+    function normalizeEnhancedToText(maybeJsonText) {
+      // If it parses as JSON, format nicely; otherwise pass through.
+      try {
+        const obj = JSON.parse(maybeJsonText);
+        const enhanced = obj.enhanced_prompt || '';
+        const negative = obj.negative_prompt || '';
+        const s = obj.settings || {};
+        const settingsLine = `Settings: model_family=${s.model_family ?? 'Unknown'}, ar=${s.suggested_aspect_ratio ?? '1:1'}, steps=${s.suggested_steps ?? 30}, cfg=${s.suggested_cfg ?? 6}, denoise=${s.suggested_denoise ?? 0.55}`;
+        const notes = obj.notes ? `Notes: ${obj.notes}` : '';
+        return [
+          enhanced && `Enhanced: ${enhanced}`,
+          negative && `Negative: ${negative}`,
+          settingsLine,
+          notes
+        ].filter(Boolean).join('\n');
+      } catch {
+        return maybeJsonText;
+      }
+    }
+
+    orEls.key?.addEventListener('input', saveOpenRouterPrefs);
+    orEls.model?.addEventListener('change', saveOpenRouterPrefs);
+
+    orEls.enhanceBtn?.addEventListener('click', async () => {
+      const raw = (els.editPrompt?.value || '').trim();
+      if (!raw) return toast('Type an edit prompt first');
+      saveOpenRouterPrefs();
+      orEls.enhanceBtn.disabled = true;
+      orEls.enhanceBtn.textContent = 'Enhancing...';
+      try {
+        const out = await openRouterEnhance(raw);
+        if (orEls.out) orEls.out.value = normalizeEnhancedToText(out);
+        toast('Enhanced');
+      } catch (e) {
+        console.error(e);
+        toast(String(e?.message || 'Enhancer failed').slice(0, 80));
+        if (orEls.out) orEls.out.value = `Error: ${e?.message || e}`;
+      } finally {
+        orEls.enhanceBtn.disabled = false;
+        orEls.enhanceBtn.textContent = 'Enhance prompt';
+      }
+    });
+
+    orEls.copyEnhancedBtn?.addEventListener('click', () => {
+      const txt = orEls.out?.value || '';
+      if (!txt.trim()) return toast('Nothing to copy');
+      copyText(txt);
+    });
+
+    orEls.useEnhancedBtn?.addEventListener('click', () => {
+      const txt = (orEls.out?.value || '').trim();
+      if (!txt) return toast('Enhance something first');
+      // Try to extract the “Enhanced:” line if present
+      const match = txt.split(/\n+/).find(l => l.toLowerCase().startsWith('enhanced:'));
+      const enhanced = match ? match.replace(/^Enhanced:\s*/i, '').trim() : txt;
+      els.editPrompt.value = enhanced;
+      updatePromptChips(els.editPrompt.value);
+      toast('Replaced editor prompt');
+    });
+
+    loadOpenRouterPrefs();
+
     const editState = {
       img: null,
       naturalW: 0,

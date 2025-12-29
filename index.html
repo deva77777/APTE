@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Photography Terminology Explorer</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root { color-scheme: dark; }
+    .glass { background: rgba(15, 23, 42, .65); backdrop-filter: blur(10px); }
+    .subtle-grid {
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(148,163,184,.18) 1px, transparent 0);
+      background-size: 22px 22px;
+    }
+    .fade-mask { mask-image: linear-gradient(to bottom, black 85%, transparent); }
+    .kbd { border: 1px solid rgba(148,163,184,.35); background: rgba(2,6,23,.55); }
+    .ring-focus:focus { outline: none; box-shadow: 0 0 0 3px rgba(56,189,248,.35); }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 subtle-grid">
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/75 backdrop-blur">
+    <div class="mx-auto max-w-6xl px-4 py-4">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-400 to-violet-500 grid place-items-center shadow">
+            <span class="font-black">AI</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold leading-tight">AI Photography Terminology Explorer</h1>
+            <p class="text-sm text-slate-300">Pick a term → get <span class="font-semibold text-slate-200">what</span>, <span class="font-semibold text-slate-200">why</span>, <span class="font-semibold text-slate-200">how</span> + examples.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          <div class="relative">
+            <input id="search" class="ring-focus w-full md:w-[380px] rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2.5 text-sm placeholder:text-slate-400" placeholder="Search: e.g., cinematic, Dutch angle, rim light, 35mm…" />
+            <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+              <span class="kbd rounded px-2 py-1">/</span>
+            </div>
+          </div>
+
+          <button id="randomBtn" class="rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/15 active:bg-white/10 border border-white/10">
+            Random term
+          </button>
+          <button id="copyBtn" class="rounded-xl bg-sky-500/15 px-4 py-2.5 text-sm font-semibold hover:bg-sky-500/25 active:bg-sky-500/15 border border-sky-400/30">
+            Copy “How” prompt tips
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2" id="chips"></div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <!-- Tabs -->
+    <section class="mb-6 glass rounded-2xl border border-white/10 overflow-hidden">
+      <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-white/10">
+        <button data-tab="explore" class="tabBtn rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/15 border border-white/10">Explore terms</button>
+        <button data-tab="edit" class="tabBtn rounded-xl bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10 border border-white/10">Edit image (prompt)</button>
+        <div class="ml-auto text-xs text-slate-400">Tip: this demo edits locally. For true AI img2img you’ll connect an API.</div>
+      </div>
+    </section>
+
+    <!-- Explore tab -->
+    <div id="tab-explore" class="grid gap-6 lg:grid-cols-[360px_1fr]">
+      <!-- Left: list -->
+      <section class="glass rounded-2xl border border-white/10 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <h2 class="text-sm font-semibold text-slate-200">Terms</h2>
+          <div class="text-xs text-slate-400"><span id="count">0</span> shown</div>
+        </div>
+        <div class="max-h-[calc(100vh-210px)] overflow-auto">
+          <ul id="termList" class="divide-y divide-white/5"></ul>
+        </div>
+      </section>
+
+      <!-- Right: details -->
+      <section class="glass rounded-2xl border border-white/10 overflow-hidden">
+        <div class="px-5 py-4 border-b border-white/10">
+          <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 id="detailTitle" class="text-xl font-bold">Select a term</h2>
+                <span id="detailCategory" class="hidden rounded-full bg-white/10 px-2.5 py-1 text-xs text-slate-200 border border-white/10"></span>
+                <span id="detailTags" class="hidden flex flex-wrap gap-2"></span>
+              </div>
+              <p id="detailOneLiner" class="mt-1 text-sm text-slate-300">Use the list on the left or search to explore terminology used in AI image generation & photography.</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="bookmarkBtn" class="rounded-xl bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/10">Save</button>
+              <button id="shareBtn" class="rounded-xl bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/10">Share</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 space-y-5">
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">What</h3>
+              <p id="detailWhat" class="mt-2 text-sm text-slate-300">—</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">Why it matters</h3>
+              <p id="detailWhy" class="mt-2 text-sm text-slate-300">—</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">How to use (prompt / camera)</h3>
+              <p id="detailHow" class="mt-2 text-sm text-slate-300">—</p>
+            </div>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="text-sm font-semibold text-slate-200">Example prompt fragments</h3>
+                <button id="copyExamplesBtn" class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10">Copy</button>
+              </div>
+              <ul id="detailExamples" class="mt-2 space-y-2 text-sm text-slate-300 list-disc pl-5"></ul>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">Common mistakes / gotchas</h3>
+              <ul id="detailMistakes" class="mt-2 space-y-2 text-sm text-slate-300 list-disc pl-5"></ul>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-200">Visual examples</h3>
+                <p class="mt-1 text-sm text-slate-300">Built-in quick visuals + your own images per term (stored locally in your browser).</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <label class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10 cursor-pointer">
+                  <input id="uploadImg" type="file" accept="image/*" class="hidden" />
+                  Add image
+                </label>
+                <button id="clearImagesBtn" class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10">Clear my images</button>
+              </div>
+            </div>
+            <div id="visualGrid" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-semibold text-slate-200">Related terms</h3>
+              <div class="text-xs text-slate-400">Tip: click a related chip to jump</div>
+            </div>
+            <div id="detailRelated" class="mt-3 flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-gradient-to-br from-slate-950/50 to-slate-900/40 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-200">Build a full prompt (optional)</h3>
+                <p class="mt-1 text-sm text-slate-300">Pick a term, then generate a complete prompt with subject + environment + constraints.</p>
+              </div>
+              <button id="buildPromptBtn" class="rounded-xl bg-violet-500/15 px-3 py-2 text-sm font-semibold hover:bg-violet-500/25 border border-violet-400/30">Generate</button>
+            </div>
+            <div class="mt-3 grid gap-3 md:grid-cols-3">
+              <div>
+                <label class="text-xs text-slate-300">Subject</label>
+                <input id="subject" class="ring-focus mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="e.g., portrait of a jazz musician" />
+              </div>
+              <div>
+                <label class="text-xs text-slate-300">Environment</label>
+                <input id="environment" class="ring-focus mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="e.g., rainy neon street" />
+              </div>
+              <div>
+                <label class="text-xs text-slate-300">Constraints</label>
+                <input id="constraints" class="ring-focus mt-1 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="e.g., sharp focus, high detail, no text" />
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="text-xs text-slate-300">Generated prompt</label>
+              <textarea id="fullPrompt" class="ring-focus mt-1 w-full min-h-[110px] rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="Your prompt will appear here..."></textarea>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button id="copyFullPromptBtn" class="rounded-xl bg-sky-500/15 px-3 py-2 text-sm font-semibold hover:bg-sky-500/25 border border-sky-400/30">Copy full prompt</button>
+                <button id="clearPromptBtn" class="rounded-xl bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/10">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-400">
+            Keyboard: <span class="kbd rounded px-2 py-1">/</span> focus search • <span class="kbd rounded px-2 py-1">↑</span>/<span class="kbd rounded px-2 py-1">↓</span> navigate • <span class="kbd rounded px-2 py-1">Enter</span> open
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Edit tab -->
+    <section id="tab-edit" class="hidden glass rounded-2xl border border-white/10 overflow-hidden">
+      <div class="px-5 py-4 border-b border-white/10">
+        <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 class="text-xl font-bold">Edit image (prompt)</h2>
+            <p class="mt-1 text-sm text-slate-300">Upload an image and apply a prompt-inspired edit locally (filters + effects). For real AI editing (img2img/inpainting), connect an API.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10 cursor-pointer">
+              <input id="editUpload" type="file" accept="image/*" class="hidden" />
+              Upload image
+            </label>
+            <button id="editResetBtn" class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10">Reset</button>
+            <button id="editDownloadBtn" class="text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10">Download PNG</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div class="space-y-3">
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+            <canvas id="editCanvas" class="w-full rounded-lg bg-black/30"></canvas>
+          </div>
+          <div class="grid gap-3 md:grid-cols-3">
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">Edit prompt</h3>
+              <textarea id="editPrompt" class="ring-focus mt-2 w-full min-h-[90px] rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm" placeholder="e.g., cinematic, warm tones, subtle film grain, vignette, increase contrast"></textarea>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button id="applyPromptBtn" class="rounded-xl bg-violet-500/15 px-3 py-2 text-sm font-semibold hover:bg-violet-500/25 border border-violet-400/30">Apply prompt</button>
+                <button id="copyEditPromptFromTermBtn" class="rounded-xl bg-sky-500/15 px-3 py-2 text-sm font-semibold hover:bg-sky-500/25 border border-sky-400/30">Insert selected term “How”</button>
+              </div>
+              <p class="mt-2 text-xs text-slate-400">This applies local effects only (no generative changes like changing pose/objects).</p>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">Quick sliders</h3>
+              <div class="mt-3 space-y-3 text-sm">
+                <label class="flex items-center justify-between gap-3">Brightness <span id="bVal" class="text-xs text-slate-400">0</span></label>
+                <input id="brightness" type="range" min="-40" max="40" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Contrast <span id="cVal" class="text-xs text-slate-400">0</span></label>
+                <input id="contrast" type="range" min="-40" max="60" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Saturation <span id="sVal" class="text-xs text-slate-400">0</span></label>
+                <input id="saturation" type="range" min="-60" max="60" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Warmth <span id="wVal" class="text-xs text-slate-400">0</span></label>
+                <input id="warmth" type="range" min="-40" max="40" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Grain <span id="gVal" class="text-xs text-slate-400">0</span></label>
+                <input id="grain" type="range" min="0" max="35" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Vignette <span id="vVal" class="text-xs text-slate-400">0</span></label>
+                <input id="vignette" type="range" min="0" max="60" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Blur <span id="blVal" class="text-xs text-slate-400">0</span></label>
+                <input id="blur" type="range" min="0" max="8" value="0" class="w-full" />
+                <label class="flex items-center justify-between gap-3">Sharpen <span id="shVal" class="text-xs text-slate-400">0</span></label>
+                <input id="sharpen" type="range" min="0" max="25" value="0" class="w-full" />
+              </div>
+            </div>
+            <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+              <h3 class="text-sm font-semibold text-slate-200">AI API requirements</h3>
+              <ul class="mt-2 space-y-2 text-sm text-slate-300 list-disc pl-5">
+                <li>Backend that supports <span class="text-slate-100 font-semibold">img2img</span> or <span class="text-slate-100 font-semibold">inpainting</span> (Stable Diffusion / SDXL, etc.).</li>
+                <li>Send: image (base64 or multipart), prompt, negative prompt, strength/denoise, steps, sampler, seed, CFG, size.</li>
+                <li>Receive: generated image(s) + metadata. Optionally return mask previews and safety flags.</li>
+                <li>Security: API key handling on server (don’t expose secrets in the browser), rate limiting.</li>
+              </ul>
+              <div class="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                <div class="text-xs text-slate-400">Optional next step</div>
+                <div class="mt-1 text-sm text-slate-200 font-semibold">Connect to an endpoint</div>
+                <p class="mt-1 text-xs text-slate-400">We can add an “API mode” form (URL + key) and call your server to do real AI edits.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="space-y-4">
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <h3 class="text-sm font-semibold text-slate-200">Prompt cues detected</h3>
+            <div id="promptChips" class="mt-3 flex flex-wrap gap-2"></div>
+            <p class="mt-2 text-xs text-slate-400">We map common words like “cinematic”, “grain”, “vignette”, “teal/orange”, “low-key” to local effects.</p>
+          </div>
+
+          <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <h3 class="text-sm font-semibold text-slate-200">Notes</h3>
+            <p class="mt-2 text-sm text-slate-300">Local edits cannot add/remove objects. For that you need a generative model (img2img/inpainting) running on a server or a hosted API.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="mt-6 glass rounded-2xl border border-white/10 p-5">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-200">Saved terms</h2>
+          <p class="text-sm text-slate-300">Quickly revisit frequently used terminology.</p>
+        </div>
+        <button id="clearSavedBtn" class="rounded-xl bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/10">Clear saved</button>
+      </div>
+      <div id="savedWrap" class="mt-3 flex flex-wrap gap-2"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden z-50 rounded-xl border border-white/10 bg-slate-900/90 px-4 py-2 text-sm text-slate-100 shadow-lg"></div>
+
+  <script>
+    // -----------------------------
+    // Glossary data
+    // -----------------------------
+    const TERMS = [
+      // Styles / aesthetics
+      {
+        id: 'cinematic',
+        term: 'Cinematic lighting',
+        category: 'Style',
+        tags: ['mood', 'film', 'dramatic'],
+        oneLiner: 'A film-like lighting + color approach that emphasizes mood, contrast, and controlled highlights.',
+        what: 'Cinematic lighting usually means motivated light sources (like window light, street lamps), stronger contrast, richer shadows, and intentional color grading (teal/orange, tungsten, etc.).',
+        why: 'It instantly communicates story and emotion. In image models it helps steer toward “movie still” vibes rather than flat, evenly-lit renders.',
+        how: 'Prompt with lighting direction + mood + lens. Example: “cinematic lighting, low-key, volumetric haze, film still, anamorphic bokeh”. Combine with time-of-day (golden hour / night) and a focal length.',
+        examples: [
+          'cinematic lighting, film still, low-key, soft haze, subtle grain',
+          'motivated lighting from neon signs, deep shadows, teal and orange grade',
+          'backlit subject, rim light, anamorphic bokeh, wide dynamic range'
+        ],
+        mistakes: [
+          'Only writing “cinematic” can be too vague—add direction (backlit), contrast (low-key), and color temperature (warm practicals).',
+          'Too many conflicting styles (cinematic + flat studio + high-key) can cancel each other.'
+        ],
+        related: ['low-key', 'rim-light', 'volumetric-light', 'anamorphic', 'film-grain']
+      },
+      {
+        id: 'photoreal',
+        term: 'Photorealistic',
+        category: 'Style',
+        tags: ['realism', 'detail'],
+        oneLiner: 'An image that looks like a real photograph rather than an illustration or 3D render.',
+        what: 'Photorealistic output aims for believable lighting, materials, anatomy, lens behavior, and noise characteristics.',
+        why: 'Useful when you want the model to avoid painterly artifacts and produce camera-like results.',
+        how: 'Add camera cues (lens, f-stop), lighting (softbox, window light), and realism constraints (natural skin texture, realistic reflections). Consider negative prompts like “cartoon, illustration”.',
+        examples: [
+          'photorealistic portrait, 85mm lens, f/1.8, natural skin texture',
+          'DSLR photo, realistic lighting, shallow depth of field, sharp eyes',
+          'natural color, subtle film grain, realistic reflections'
+        ],
+        mistakes: [
+          'Over-sharpening terms ("ultra sharp, hyper detailed") can cause crunchy texture.',
+          'Ignoring lens/lighting often yields “CG realism” instead of photo realism.'
+        ],
+        related: ['depth-of-field', 'bokeh', '35mm', '85mm', 'skin-texture']
+      },
+      {
+        id: 'film-grain',
+        term: 'Film grain',
+        category: 'Post-processing',
+        tags: ['texture', 'analog'],
+        oneLiner: 'Fine noise-like texture from photographic film that can make images feel organic.',
+        what: 'Grain is random silver-halide texture (or emulation) that varies with ISO/film stock.',
+        why: 'It reduces “too clean” AI look, adds cohesion, and can hide minor artifacts.',
+        how: 'Prompt “subtle film grain” and optionally a stock (Kodak Portra 400, Fuji Pro 400H). Keep it subtle for portraits; stronger for gritty street scenes.',
+        examples: [
+          'Kodak Portra 400, subtle film grain, natural tones',
+          '35mm film photo, noticeable grain, high contrast street night',
+          'analog film look, soft halation, gentle grain'
+        ],
+        mistakes: [
+          'Too much grain can destroy detail and look like compression noise.',
+          'Combining “ultra clean studio” with “heavy grain” can feel inconsistent.'
+        ],
+        related: ['halation', 'photoreal', 'high-iso', 'color-grading']
+      },
+      {
+        id: 'halation',
+        term: 'Halation',
+        category: 'Post-processing',
+        tags: ['glow', 'film'],
+        oneLiner: 'A soft glow around bright highlights common in film and film-emulation.',
+        what: 'Halation occurs when light scatters within film layers, creating a bloom-like edge around highlights.',
+        why: 'Adds a dreamy, analog feel; helps highlights look less “digital” and more cinematic.',
+        how: 'Prompt “subtle halation, highlight bloom” and pair with film stocks or “soft highlights”. Works well with backlight and neon.',
+        examples: [
+          'subtle halation around highlights, film emulation',
+          'neon signs, halation glow, rainy night street',
+          'backlit portrait, soft bloom, gentle halation'
+        ],
+        mistakes: [
+          'Too much bloom can wash out contrast and reduce clarity.',
+          'Halation without strong highlights may do nothing—add “bright practical lights”.'
+        ],
+        related: ['film-grain', 'bloom', 'rim-light', 'cinematic']
+      },
+      {
+        id: 'color-grading',
+        term: 'Color grading',
+        category: 'Post-processing',
+        tags: ['tone', 'palette'],
+        oneLiner: 'Intentional color and contrast adjustment to create a consistent mood.',
+        what: 'Grading can shift shadows/mids/highlights, saturation, and contrast to a target palette (teal/orange, muted pastels, desaturated noir).',
+        why: 'It’s one of the strongest “style levers” to signal genre, era, and emotion.',
+        how: 'Specify palette + contrast: “teal and orange grade, lifted blacks, warm highlights” or “muted pastel grade, low contrast”.',
+        examples: [
+          'teal and orange color grade, cinematic contrast',
+          'muted pastel grade, soft contrast, airy feel',
+          'monochrome grade, crushed blacks, film noir'
+        ],
+        mistakes: [
+          'Asking for multiple palettes simultaneously leads to muddy colors.',
+          'Extreme grading can produce unnatural skin tones—add “natural skin tones”.'
+        ],
+        related: ['cinematic', 'low-key', 'high-key', 'white-balance']
+      },
+
+      // Angles / camera placement
+      {
+        id: 'dutch-angle',
+        term: 'Dutch angle (tilted horizon)',
+        category: 'Angle',
+        tags: ['dynamic', 'unease'],
+        oneLiner: 'A tilted camera angle that makes the horizon diagonal for tension or energy.',
+        what: 'The camera is rotated around the lens axis, so verticals lean and the horizon tilts.',
+        why: 'Creates unease, urgency, or stylized dynamism—common in thrillers, music videos, and action scenes.',
+        how: 'Prompt: “Dutch angle, tilted horizon, dynamic composition”. Pair with action verbs and motion blur for impact.',
+        examples: [
+          'Dutch angle, tilted horizon, neon alley, dramatic shadows',
+          'dynamic dutch angle shot, running figure, motion blur',
+          'close-up dutch angle, intense expression, high contrast'
+        ],
+        mistakes: [
+          'Overusing it makes scenes feel gimmicky—use for emphasis.',
+          'If you also request “perfect symmetry” the model may conflict—pick one.'
+        ],
+        related: ['low-angle', 'high-angle', 'leading-lines', 'motion-blur']
+      },
+      {
+        id: 'low-angle',
+        term: 'Low-angle shot',
+        category: 'Angle',
+        tags: ['power', 'scale'],
+        oneLiner: 'Camera placed below the subject, aiming upward.',
+        what: 'A perspective that emphasizes height and dominance; vertical lines converge upward.',
+        why: 'Makes subjects feel powerful, heroic, intimidating, or monumental.',
+        how: 'Prompt “low-angle shot, looking up” and optionally add “wide lens” for exaggeration or “telephoto” for subtlety.',
+        examples: [
+          'low-angle shot of a skyscraper, wide lens, dramatic clouds',
+          'low-angle portrait, heroic pose, rim light',
+          'low-angle shot, towering robot, cinematic lighting'
+        ],
+        mistakes: [
+          'Wide lenses + close distance can distort faces—use with care for portraits.',
+          'If you want elegance, avoid too extreme perspective.'
+        ],
+        related: ['high-angle', 'wide-angle', 'perspective-distortion', 'hero-shot']
+      },
+      {
+        id: 'high-angle',
+        term: 'High-angle shot',
+        category: 'Angle',
+        tags: ['vulnerability', 'overview'],
+        oneLiner: 'Camera positioned above the subject, looking down.',
+        what: 'A top-down-ish perspective that can reduce perceived power of the subject or show layout/context.',
+        why: 'Great for conveying vulnerability, scale of environment, or for showing patterns and geometry.',
+        how: 'Prompt “high-angle shot, looking down” and specify height: “from a balcony / drone / rooftop”.',
+        examples: [
+          'high-angle shot from rooftop, crowded crosswalk, rainy night',
+          'overhead high-angle portrait, soft light, minimal background',
+          'drone-like high angle, coastline, golden hour'
+        ],
+        mistakes: [
+          'If you also request “eye-level perspective” you’ll confuse the model.',
+          'Overhead angles can flatten faces—better for scenes than close portraits.'
+        ],
+        related: ['birdseye', 'top-down', 'rule-of-thirds', 'leading-lines']
+      },
+      {
+        id: 'birdseye',
+        term: 'Bird’s-eye view (top-down)',
+        category: 'Angle',
+        tags: ['geometry', 'patterns'],
+        oneLiner: 'A near-vertical viewpoint from directly above.',
+        what: 'The camera looks straight down, minimizing horizon and emphasizing shapes, layout, and patterns.',
+        why: 'Excellent for product flat-lays, maps, architecture, crowds, and graphic compositions.',
+        how: 'Prompt “bird’s-eye view, top-down, flat lay” and add “even lighting” for clarity.',
+        examples: [
+          'bird’s-eye view flat lay of coffee and notebook, soft diffused light',
+          'top-down shot of winding road, graphic composition',
+          'overhead view of sushi platter, clean background'
+        ],
+        mistakes: [
+          'If you want depth and perspective, top-down may feel too flat.',
+          'Shadow direction can look odd—ask for “soft diffused light”.'
+        ],
+        related: ['high-angle', 'flat-lay', 'negative-space', 'composition']
+      },
+
+      // Lenses / focal length
+      {
+        id: '35mm',
+        term: '35mm lens look',
+        category: 'Lens',
+        tags: ['environmental', 'natural'],
+        oneLiner: 'A versatile perspective often used for environmental portraits and street photography.',
+        what: '35mm (full-frame) is moderately wide: shows context without extreme distortion.',
+        why: 'It feels natural and story-driven—great when you want the subject plus surroundings.',
+        how: 'Prompt “35mm lens, environmental portrait” and add aperture (f/2, f/4) to control background blur.',
+        examples: [
+          '35mm lens, environmental portrait, city background, f/2.8',
+          'street photo, 35mm, candid moment, natural light',
+          '35mm wide documentary style, realistic colors'
+        ],
+        mistakes: [
+          'Getting too close can still distort faces—step back for portraits.',
+          'If you want strong compression, use 85mm/135mm instead.'
+        ],
+        related: ['85mm', 'wide-angle', 'depth-of-field', 'street-photography']
+      },
+      {
+        id: '85mm',
+        term: '85mm lens look',
+        category: 'Lens',
+        tags: ['portrait', 'compression'],
+        oneLiner: 'A classic portrait focal length with flattering compression and strong background blur.',
+        what: '85mm (full-frame) narrows the field of view and compresses perspective slightly, making facial features look natural.',
+        why: 'Helps portraits feel premium: subject separation, creamy bokeh, less distortion than wide lenses.',
+        how: 'Prompt “85mm lens, portrait, f/1.8” and specify focus point “sharp eyes”.',
+        examples: [
+          '85mm portrait, f/1.8, creamy bokeh, natural skin texture',
+          'studio portrait, 85mm, softbox lighting, catchlights',
+          'golden hour portrait, 85mm, backlight, gentle halation'
+        ],
+        mistakes: [
+          'Too shallow DOF can blur ears/hair excessively—raise to f/2.8–f/4.',
+          'If your scene needs context, 85mm may crop too tight.'
+        ],
+        related: ['depth-of-field', 'bokeh', 'portrait-lighting', 'photoreal']
+      },
+      {
+        id: 'wide-angle',
+        term: 'Wide-angle lens',
+        category: 'Lens',
+        tags: ['space', 'distortion'],
+        oneLiner: 'A lens with a wide field of view that captures more of the scene.',
+        what: 'Wide lenses (e.g., 16–28mm) exaggerate perspective: near objects look larger, lines converge.',
+        why: 'Great for architecture, interiors, landscapes, and dynamic action shots.',
+        how: 'Prompt “wide-angle, 24mm” and control distortion with “straight verticals” if needed.',
+        examples: [
+          '24mm wide-angle interior, straight verticals, soft window light',
+          '16mm wide lens, dramatic perspective, mountain foreground',
+          'wide-angle action shot, dynamic composition, motion blur'
+        ],
+        mistakes: [
+          'Faces close to camera can look stretched—avoid for tight portraits.',
+          '“Wide-angle + telephoto compression” is contradictory.'
+        ],
+        related: ['perspective-distortion', 'low-angle', 'leading-lines', 'architecture']
+      },
+
+      // Lighting
+      {
+        id: 'rim-light',
+        term: 'Rim light',
+        category: 'Lighting',
+        tags: ['separation', 'backlight'],
+        oneLiner: 'Light from behind/side that outlines the subject with a bright edge.',
+        what: 'A back/side light creates a glowing outline on hair/shoulders, separating subject from background.',
+        why: 'Adds depth, clarity, and cinematic pop—especially in dark scenes.',
+        how: 'Prompt “rim light, backlit, hair light” and mention background darkness or haze for stronger effect.',
+        examples: [
+          'backlit portrait, rim light on hair, dark background, soft haze',
+          'dramatic rim light, silhouette edges visible, neon behind',
+          'studio rim light, subject separation, low-key lighting'
+        ],
+        mistakes: [
+          'Rim light without a darker background may be invisible.',
+          'Too strong rim can clip highlights—ask for “soft rim”.'
+        ],
+        related: ['backlight', 'silhouette', 'volumetric-light', 'cinematic']
+      },
+      {
+        id: 'volumetric-light',
+        term: 'Volumetric light (god rays)',
+        category: 'Lighting',
+        tags: ['atmosphere', 'haze'],
+        oneLiner: 'Visible beams of light created by particles like fog, dust, or haze.',
+        what: 'When light scatters through a medium (mist/smoke), beams become visible.',
+        why: 'Adds depth, atmosphere, and a strong cinematic look; helps models produce more dimensional scenes.',
+        how: 'Prompt “volumetric light, light beams, haze/fog, backlight” and specify source: window, sunlight, headlights.',
+        examples: [
+          'sunbeams through window, volumetric light, dust motes',
+          'forest morning fog, god rays, cinematic lighting',
+          'spotlight in smoky room, volumetric beams, dramatic'
+        ],
+        mistakes: [
+          'If you also request “crystal clear air” the effect may disappear.',
+          'Too much fog can hide subject—use “subtle haze”.'
+        ],
+        related: ['cinematic', 'rim-light', 'backlight', 'atmospheric-perspective']
+      },
+      {
+        id: 'softbox',
+        term: 'Softbox lighting',
+        category: 'Lighting',
+        tags: ['studio', 'soft'],
+        oneLiner: 'Soft, diffused studio light that reduces harsh shadows.',
+        what: 'A softbox is a large diffused light source producing gentle transitions and clean catchlights.',
+        why: 'Reliable for portraits/products; helps AI models create flattering, even illumination.',
+        how: 'Prompt “studio portrait, softbox key light, fill light” and specify angle: “45-degree key, soft shadows”.',
+        examples: [
+          'studio portrait, softbox lighting, clean background, sharp eyes',
+          'product photo, softbox reflections, seamless white backdrop',
+          'beauty lighting, large softbox, smooth gradients'
+        ],
+        mistakes: [
+          'Softbox + “hard noon sun shadows” conflicts—choose one.',
+          'Too much “beauty retouch” can plasticize skin; add “natural texture”.'
+        ],
+        related: ['portrait-lighting', 'catchlight', 'high-key', 'photoreal']
+      },
+      {
+        id: 'low-key',
+        term: 'Low-key lighting',
+        category: 'Lighting',
+        tags: ['dramatic', 'contrast'],
+        oneLiner: 'Lighting style with mostly dark tones, deep shadows, and selective highlights.',
+        what: 'Low-key uses high contrast and limited fill, producing a moody, shadow-forward look.',
+        why: 'Adds drama and directs attention; reduces background clutter.',
+        how: 'Prompt “low-key, high contrast, single key light, dark background” and specify where the key hits.',
+        examples: [
+          'low-key portrait, Rembrandt lighting, dark background',
+          'noir scene, low-key, hard practical light, smoke haze',
+          'moody low-key still life, chiaroscuro'
+        ],
+        mistakes: [
+          'If the subject disappears, add “slight fill light” or “rim light”.',
+          '“Low-key” + “bright airy high-key” conflicts.'
+        ],
+        related: ['high-key', 'rembrandt', 'cinematic', 'rim-light']
+      },
+      {
+        id: 'high-key',
+        term: 'High-key lighting',
+        category: 'Lighting',
+        tags: ['bright', 'clean'],
+        oneLiner: 'Bright, low-contrast lighting with minimal shadows.',
+        what: 'High-key scenes have elevated exposure, soft shadows, and often light backgrounds.',
+        why: 'Feels friendly, commercial, airy—popular for beauty and product photography.',
+        how: 'Prompt “high-key, soft diffused light, bright background, low contrast” and mention “even illumination”.',
+        examples: [
+          'high-key studio portrait, soft diffused light, clean white background',
+          'bright product photo, even lighting, minimal shadows',
+          'airy lifestyle photo, soft daylight, pastel tones'
+        ],
+        mistakes: [
+          'Overexposure can blow out details—use “retain highlight detail”.',
+          'High-key + “deep dramatic shadows” conflicts.'
+        ],
+        related: ['softbox', 'exposure', 'white-balance', 'color-grading']
+      },
+      {
+        id: 'rembrandt',
+        term: 'Rembrandt lighting',
+        category: 'Lighting',
+        tags: ['portrait', 'triangle'],
+        oneLiner: 'Classic portrait lighting with a small triangle of light on the shadow cheek.',
+        what: 'A key light placed high and to the side creates a lit triangle under the eye on the far cheek.',
+        why: 'Adds depth and drama while staying flattering—great for character portraits.',
+        how: 'Prompt “Rembrandt lighting, 45-degree key light, subtle fill” and mention “triangle of light on cheek”.',
+        examples: [
+          'Rembrandt lighting portrait, dark background, 85mm, sharp eyes',
+          'moody character portrait, Rembrandt light, subtle rim',
+          'studio headshot, Rembrandt lighting, natural skin texture'
+        ],
+        mistakes: [
+          'If the triangle is missing, clarify light height/direction: “key light above eye level”.',
+          'Too little fill can make one side overly dark—add “gentle fill”.'
+        ],
+        related: ['low-key', 'portrait-lighting', 'softbox', 'rim-light']
+      },
+
+      // Composition
+      {
+        id: 'rule-of-thirds',
+        term: 'Rule of thirds',
+        category: 'Composition',
+        tags: ['framing', 'balance'],
+        oneLiner: 'Place key elements along thirds lines to create balanced, pleasing compositions.',
+        what: 'Imagine a 3x3 grid; align the subject on intersections/lines rather than dead-center.',
+        why: 'It helps images feel intentional and dynamic without complex design theory.',
+        how: 'Prompt “rule of thirds composition, subject on left third” or specify “horizon on upper third”.',
+        examples: [
+          'rule of thirds, subject on left third, negative space on right',
+          'horizon on upper third, foreground interest, wide landscape',
+          'portrait on right third, looking into empty space'
+        ],
+        mistakes: [
+          'It’s a guideline, not law—symmetry can be better for certain scenes.',
+          'If you want centered symmetry, don’t also demand rule-of-thirds.'
+        ],
+        related: ['symmetry', 'leading-lines', 'negative-space', 'composition']
+      },
+      {
+        id: 'leading-lines',
+        term: 'Leading lines',
+        category: 'Composition',
+        tags: ['depth', 'direction'],
+        oneLiner: 'Use lines in the scene to guide the viewer’s eye toward the subject.',
+        what: 'Roads, rails, edges, shadows, and architecture lines can converge toward a focal point.',
+        why: 'Creates depth and visual flow—very effective for cinematic scenes and architecture.',
+        how: 'Prompt “leading lines toward subject, vanishing point” and include scene elements (hallway, street).',
+        examples: [
+          'leading lines, long corridor, vanishing point, subject centered',
+          'street at night, wet road leading lines, neon reflections',
+          'bridge cables leading lines, dramatic sky'
+        ],
+        mistakes: [
+          'Too many competing lines can distract—keep a single dominant direction.',
+          'If you also ask for “flat composition”, it reduces the effect.'
+        ],
+        related: ['rule-of-thirds', 'wide-angle', 'perspective', 'vanishing-point']
+      },
+      {
+        id: 'negative-space',
+        term: 'Negative space',
+        category: 'Composition',
+        tags: ['minimal', 'focus'],
+        oneLiner: 'Intentional empty space around the subject to emphasize it.',
+        what: 'Large simple areas (sky, wall, blur) create breathing room and stronger subject emphasis.',
+        why: 'Makes images feel premium, clean, and readable—useful for posters and ads.',
+        how: 'Prompt “minimal composition, lots of negative space, subject small in frame” and specify where the emptiness sits.',
+        examples: [
+          'minimal portrait, negative space, subject on lower third, pale background',
+          'lonely figure in vast desert, lots of negative space',
+          'product photo with negative space for text placement'
+        ],
+        mistakes: [
+          'If you want a busy scene, negative space is the opposite—avoid mixing.',
+          'Negative space + extreme detail everywhere can conflict.'
+        ],
+        related: ['rule-of-thirds', 'minimalism', 'high-key', 'centered-composition']
+      },
+
+      // Prompting / model behavior
+      {
+        id: 'negative-prompt',
+        term: 'Negative prompt',
+        category: 'Prompting',
+        tags: ['control', 'avoid'],
+        oneLiner: 'Words describing what you do NOT want the model to generate.',
+        what: 'Many image models allow “negative prompts” to reduce unwanted features (text, extra fingers, blurry faces).',
+        why: 'Improves consistency and reduces common artifacts by pushing the model away from failure modes.',
+        how: 'Use short, specific phrases: “text, watermark, extra fingers, deformed hands, lowres, blurry”. Keep it relevant—too broad can remove useful detail.',
+        examples: [
+          'Negative: text, watermark, logo, signature',
+          'Negative: extra fingers, deformed hands, bad anatomy',
+          'Negative: blurry, lowres, jpeg artifacts'
+        ],
+        mistakes: [
+          'Stacking hundreds of negatives can harm quality or style.',
+          'Negatives like “ugly” are vague; prefer concrete issues.'
+        ],
+        related: ['prompt-weighting', 'seed', 'cfg', 'inpainting']
+      },
+      {
+        id: 'prompt-weighting',
+        term: 'Prompt weighting',
+        category: 'Prompting',
+        tags: ['emphasis', 'priority'],
+        oneLiner: 'A way to emphasize certain words/phrases so the model prioritizes them.',
+        what: 'Some tools support weights (e.g., (word:1.3)) or repeated tokens to increase importance.',
+        why: 'Helps lock in key attributes (hair color, lighting, angle) when the model keeps drifting.',
+        how: 'Use gently: increase only crucial attributes. Example: “(rim light:1.2), (85mm:1.1)”.',
+        examples: [
+          '(cinematic lighting:1.2), (film still:1.1), subtle grain',
+          '(sharp eyes:1.3), natural skin texture',
+          '(top-down:1.2), flat lay, even lighting'
+        ],
+        mistakes: [
+          'Overweighting can cause weird artifacts or ignore other parts of the prompt.',
+          'Different tools use different syntax—check your generator.'
+        ],
+        related: ['negative-prompt', 'cfg', 'seed', 'style']
+      },
+      {
+        id: 'seed',
+        term: 'Seed',
+        category: 'Prompting',
+        tags: ['reproducibility'],
+        oneLiner: 'A number that initializes randomness so you can reproduce or vary results.',
+        what: 'The seed controls the random noise pattern that the model evolves into an image.',
+        why: 'Reusing a seed helps iterate: you can tweak prompts while keeping composition similar.',
+        how: 'Lock seed for consistent framing; change seed to explore variations. Combine with small prompt edits.',
+        examples: [
+          'Use same seed while adjusting lighting terms to compare results',
+          'Change seed to explore different poses/backgrounds',
+          'Fix seed for a series with consistent style'
+        ],
+        mistakes: [
+          'Different models/tools may interpret the same seed differently.',
+          'Changing resolution or sampler can change results even with same seed.'
+        ],
+        related: ['cfg', 'sampler', 'prompt-weighting', 'img2img']
+      },
+      {
+        id: 'cfg',
+        term: 'CFG / Guidance scale',
+        category: 'Prompting',
+        tags: ['adherence', 'creativity'],
+        oneLiner: 'Controls how strongly the model follows your prompt vs improvises.',
+        what: 'Higher guidance pushes closer to prompt; lower allows more creative deviation.',
+        why: 'Helps balance accuracy vs naturalism; too high can create harsh, overcooked artifacts.',
+        how: 'If outputs ignore your prompt, raise CFG a bit. If results look crispy/unreal, lower it. (Exact ranges depend on tool.)',
+        examples: [
+          'Raise CFG slightly to enforce “Dutch angle” and “rim light”',
+          'Lower CFG if faces look over-processed',
+          'Medium CFG for balanced realism'
+        ],
+        mistakes: [
+          'Maxing CFG can produce posterization, weird textures, or repeated motifs.',
+          'CFG interacts with sampler/steps—tune together.'
+        ],
+        related: ['seed', 'sampler', 'steps', 'negative-prompt']
+      },
+      {
+        id: 'inpainting',
+        term: 'Inpainting',
+        category: 'Prompting',
+        tags: ['fix', 'edit'],
+        oneLiner: 'Regenerating only a masked area to fix or change parts of an image.',
+        what: 'You paint a mask (hands, face, background) and the model redraws that region while preserving surroundings.',
+        why: 'Best way to fix common issues (hands, eyes, logos) without losing the whole image.',
+        how: 'Mask slightly beyond the problem area, use a focused prompt for the region, and keep denoise/strength moderate for seamless blending.',
+        examples: [
+          'Inpaint hands: “natural hands, five fingers, realistic skin”',
+          'Inpaint face: “sharp eyes, natural skin texture, subtle pores”',
+          'Inpaint background: “soft bokeh city lights, night, cinematic”'
+        ],
+        mistakes: [
+          'Mask too tight can leave seams—feather/expand the mask.',
+          'Too strong denoise can change identity or style.'
+        ],
+        related: ['img2img', 'negative-prompt', 'seed', 'controlnet']
+      },
+
+      // Depth / focus
+      {
+        id: 'depth-of-field',
+        term: 'Depth of field (DOF)',
+        category: 'Focus',
+        tags: ['blur', 'separation'],
+        oneLiner: 'How much of the scene is in focus from near to far.',
+        what: 'Shallow DOF = blurry background/foreground; deep DOF = more of the scene sharp.',
+        why: 'It’s a major realism cue. Controls subject separation and viewer attention.',
+        how: 'Prompt aperture cues: “shallow depth of field, f/1.8” for portraits; “deep depth of field, f/8” for landscapes.',
+        examples: [
+          'shallow depth of field, f/1.8, creamy bokeh, sharp eyes',
+          'deep depth of field, f/11, everything sharp, landscape',
+          'selective focus, subject sharp, background softly blurred'
+        ],
+        mistakes: [
+          'Asking for “everything sharp” and “creamy bokeh” conflicts.',
+          'Too shallow DOF can blur important details (ears, hands) unintentionally.'
+        ],
+        related: ['bokeh', '85mm', 'focus-stacking', 'aperture']
+      },
+      {
+        id: 'bokeh',
+        term: 'Bokeh',
+        category: 'Focus',
+        tags: ['background', 'lights'],
+        oneLiner: 'The aesthetic quality of out-of-focus areas, especially background light circles.',
+        what: 'Bokeh refers to how blur looks—smooth, creamy, swirly, or busy—often seen in defocused highlights.',
+        why: 'Adds a premium look and helps subjects pop. It’s a strong photography cue for AI models.',
+        how: 'Prompt “creamy bokeh, shallow DOF” and include light sources: “city lights in background”. Mention lens type (anamorphic bokeh).',
+        examples: [
+          'creamy bokeh, 85mm, f/1.4, city lights background',
+          'anamorphic bokeh, cinematic night street, neon',
+          'soft bokeh, golden hour, backlit portrait'
+        ],
+        mistakes: [
+          'Bokeh without background lights may look generic—add “string lights / neon / candles”.',
+          'Too much blur can look artificial—balance with “sharp subject”.'
+        ],
+        related: ['depth-of-field', '85mm', 'anamorphic', 'lens']
+      },
+      {
+        id: 'anamorphic',
+        term: 'Anamorphic look',
+        category: 'Lens',
+        tags: ['cinema', 'flare'],
+        oneLiner: 'A cinema lens aesthetic with wide aspect, oval bokeh, and characteristic flares.',
+        what: 'Anamorphic lenses squeeze the image; when unsqueezed, they often show oval bokeh and horizontal flares.',
+        why: 'Instant “film still” vibe; helps AI outputs feel like high-end cinematography.',
+        how: 'Prompt “anamorphic lens, oval bokeh, horizontal lens flare, 2.39:1” and specify lighting sources for flare.',
+        examples: [
+          'anamorphic lens, oval bokeh, horizontal flare, film still',
+          'cinematic night scene, anamorphic bokeh, neon reflections',
+          'backlit subject, anamorphic flare, subtle grain'
+        ],
+        mistakes: [
+          'Overuse of “lens flare” can obscure the scene—use “subtle flare”.',
+          'If your tool can’t set aspect ratio, the look may be partial.'
+        ],
+        related: ['cinematic', 'bokeh', 'film-grain', 'lens-flare']
+      },
+      {
+        id: 'motion-blur',
+        term: 'Motion blur',
+        category: 'Technique',
+        tags: ['speed', 'movement'],
+        oneLiner: 'Blur caused by movement during exposure, conveying speed and energy.',
+        what: 'Longer shutter speeds blur moving subjects/backgrounds; panning can keep subject sharp with blurred background.',
+        why: 'Adds realism and dynamism—especially for action, sports, and city scenes.',
+        how: 'Prompt “motion blur, panning shot, slow shutter” and specify what’s blurred (background streaks) vs sharp (subject).',
+        examples: [
+          'panning shot, subject sharp, background motion blur streaks',
+          'slow shutter, car light trails, night city',
+          'running figure, motion blur, dynamic dutch angle'
+        ],
+        mistakes: [
+          'If everything blurs, add “sharp subject” or increase shutter cues.',
+          'Motion blur + “crystal sharp everywhere” conflicts.'
+        ],
+        related: ['dutch-angle', 'shutter-speed', 'action-shot', 'street-photography']
+      },
+      {
+        id: 'white-balance',
+        term: 'White balance',
+        category: 'Technique',
+        tags: ['color', 'temperature'],
+        oneLiner: 'Adjusting color temperature so whites look neutral (or intentionally warm/cool).',
+        what: 'WB compensates for lighting color (tungsten warm, shade cool) to prevent color casts.',
+        why: 'Strongly affects mood and skin tones; helps avoid green/magenta casts in AI outputs.',
+        how: 'Prompt “warm white balance, tungsten practical lights” or “cool daylight balance”. Add “natural skin tones” if needed.',
+        examples: [
+          'warm tungsten white balance, cozy interior, practical lights',
+          'cool daylight white balance, crisp winter street',
+          'neutral white balance, product photo, accurate colors'
+        ],
+        mistakes: [
+          'Mixing multiple light sources can create mixed WB—decide if you want it or specify “mixed lighting”.',
+          'Over-warming can make skin orange—use “natural skin tones”.'
+        ],
+        related: ['color-grading', 'high-key', 'cinematic', 'skin-texture']
+      },
+      {
+        id: 'skin-texture',
+        term: 'Natural skin texture',
+        category: 'Style',
+        tags: ['portrait', 'realism'],
+        oneLiner: 'Realistic pores and subtle imperfections, avoiding plastic/airbrushed skin.',
+        what: 'Skin texture includes pores, fine lines, micro-contrast, and natural variation.',
+        why: 'Improves realism and credibility; prevents “AI beauty render” look.',
+        how: 'Prompt “natural skin texture, subtle pores, realistic makeup” and avoid extreme “beauty retouch”.',
+        examples: [
+          'natural skin texture, subtle pores, realistic makeup',
+          'documentary portrait, honest skin detail, soft window light',
+          'photorealistic headshot, sharp eyes, natural texture'
+        ],
+        mistakes: [
+          'Too much “high detail” can create fake pore patterns—use “subtle”.',
+          'Combining “perfect flawless skin” with “natural texture” conflicts.'
+        ],
+        related: ['photoreal', 'softbox', '85mm', 'retouching']
+      }
+    ];
+
+    const CATEGORIES = ['All', ...Array.from(new Set(TERMS.map(t => t.category))).sort()];
+
+    const els = {
+      // Tabs
+      tabExplore: document.getElementById('tab-explore'),
+      tabEdit: document.getElementById('tab-edit'),
+      tabBtns: Array.from(document.querySelectorAll('.tabBtn')),
+
+      chips: document.getElementById('chips'),
+      search: document.getElementById('search'),
+      list: document.getElementById('termList'),
+      count: document.getElementById('count'),
+      randomBtn: document.getElementById('randomBtn'),
+      copyBtn: document.getElementById('copyBtn'),
+      copyExamplesBtn: document.getElementById('copyExamplesBtn'),
+      buildPromptBtn: document.getElementById('buildPromptBtn'),
+      copyFullPromptBtn: document.getElementById('copyFullPromptBtn'),
+      clearPromptBtn: document.getElementById('clearPromptBtn'),
+      subject: document.getElementById('subject'),
+      environment: document.getElementById('environment'),
+      constraints: document.getElementById('constraints'),
+      fullPrompt: document.getElementById('fullPrompt'),
+      toast: document.getElementById('toast'),
+      bookmarkBtn: document.getElementById('bookmarkBtn'),
+      savedWrap: document.getElementById('savedWrap'),
+      clearSavedBtn: document.getElementById('clearSavedBtn'),
+      shareBtn: document.getElementById('shareBtn'),
+      detailTitle: document.getElementById('detailTitle'),
+      detailCategory: document.getElementById('detailCategory'),
+      detailTags: document.getElementById('detailTags'),
+      
+      // Edit tab
+      editUpload: document.getElementById('editUpload'),
+      editCanvas: document.getElementById('editCanvas'),
+      editPrompt: document.getElementById('editPrompt'),
+      applyPromptBtn: document.getElementById('applyPromptBtn'),
+      copyEditPromptFromTermBtn: document.getElementById('copyEditPromptFromTermBtn'),
+      editResetBtn: document.getElementById('editResetBtn'),
+      editDownloadBtn: document.getElementById('editDownloadBtn'),
+      promptChips: document.getElementById('promptChips'),
+      sliders: {
+        brightness: document.getElementById('brightness'),
+        contrast: document.getElementById('contrast'),
+        saturation: document.getElementById('saturation'),
+        warmth: document.getElementById('warmth'),
+        grain: document.getElementById('grain'),
+        vignette: document.getElementById('vignette'),
+        blur: document.getElementById('blur'),
+        sharpen: document.getElementById('sharpen')
+      },
+      sliderVals: {
+        bVal: document.getElementById('bVal'),
+        cVal: document.getElementById('cVal'),
+        sVal: document.getElementById('sVal'),
+        wVal: document.getElementById('wVal'),
+        gVal: document.getElementById('gVal'),
+        vVal: document.getElementById('vVal'),
+        blVal: document.getElementById('blVal'),
+        shVal: document.getElementById('shVal')
+      },
+      detailOneLiner: document.getElementById('detailOneLiner'),
+      detailWhat: document.getElementById('detailWhat'),
+      detailWhy: document.getElementById('detailWhy'),
+      detailHow: document.getElementById('detailHow'),
+      detailExamples: document.getElementById('detailExamples'),
+      detailMistakes: document.getElementById('detailMistakes'),
+      detailRelated: document.getElementById('detailRelated'),
+
+      // Visual examples
+      visualGrid: document.getElementById('visualGrid'),
+      uploadImg: document.getElementById('uploadImg'),
+      clearImagesBtn: document.getElementById('clearImagesBtn')
+    };
+
+    let activeCategory = 'All';
+    let activeId = null;
+    let keyboardIndex = 0;
+
+    // Dev-friendly safety: log any missing required elements so rendering doesn't silently fail
+    (function checkEls(){
+      const missing = Object.entries(els).filter(([,v]) => !v).map(([k]) => k);
+      if (missing.length) console.warn('Missing DOM elements:', missing);
+    })();
+
+    const STORAGE_KEY = 'ai-photo-terms:saved:v1';
+    const IMG_KEY = 'ai-photo-terms:images:v1';
+
+    function toast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => els.toast.classList.add('hidden'), 1400);
+    }
+
+    function normalize(s) {
+      return (s || '').toLowerCase().trim();
+    }
+
+    function getSaved() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch { return []; }
+    }
+
+    function setSaved(arr) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+      renderSaved();
+    }
+
+    function getImagesMap() {
+      try {
+        return JSON.parse(localStorage.getItem(IMG_KEY) || '{}');
+      } catch { return {}; }
+    }
+
+    function setImagesMap(map) {
+      localStorage.setItem(IMG_KEY, JSON.stringify(map));
+    }
+
+    function getImagesFor(id) {
+      const map = getImagesMap();
+      const arr = map[id];
+      return Array.isArray(arr) ? arr : [];
+    }
+
+    function addImageFor(id, dataUrl) {
+      const map = getImagesMap();
+      const arr = Array.isArray(map[id]) ? map[id] : [];
+      arr.unshift({ dataUrl, addedAt: Date.now() });
+      map[id] = arr.slice(0, 12); // cap per term
+      setImagesMap(map);
+    }
+
+    function clearImagesFor(id) {
+      const map = getImagesMap();
+      delete map[id];
+      setImagesMap(map);
+    }
+
+    function svgDataUrl(svg) {
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    function builtInVisualsFor(t) {
+      // Lightweight illustrative thumbnails (not real photos) that hint the concept.
+      // They are intentionally simple so the app works without external assets.
+      const accent = {
+        Style: ['#38bdf8', '#a78bfa'],
+        Angle: ['#f59e0b', '#fb7185'],
+        Lens: ['#22c55e', '#38bdf8'],
+        Lighting: ['#a78bfa', '#f472b6'],
+        Composition: ['#60a5fa', '#34d399'],
+        Prompting: ['#f97316', '#38bdf8'],
+        Technique: ['#eab308', '#22c55e'],
+        'Post-processing': ['#fb7185', '#a78bfa'],
+        Focus: ['#38bdf8', '#22c55e']
+      }[t.category] || ['#38bdf8', '#a78bfa'];
+
+      const [c1, c2] = accent;
+      const title = (t.term || '').replace(/&/g,'and');
+
+      const card = (label, bodySvg) => ({
+        label,
+        src: svgDataUrl(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540">
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="${c1}" stop-opacity="0.9"/>
+                <stop offset="1" stop-color="${c2}" stop-opacity="0.85"/>
+              </linearGradient>
+              <filter id="blur" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="14" />
+              </filter>
+            </defs>
+            <rect width="900" height="540" rx="36" fill="#0b1220"/>
+            <rect x="26" y="26" width="848" height="488" rx="28" fill="url(#g)" opacity="0.14"/>
+            <g opacity="0.95">${bodySvg}</g>
+            <text x="56" y="78" font-family="ui-sans-serif, system-ui" font-size="34" fill="#e2e8f0" font-weight="700">${title}</text>
+            <text x="56" y="114" font-family="ui-sans-serif, system-ui" font-size="22" fill="#94a3b8">${label}</text>
+          </svg>
+        `)
+      });
+
+      // A few generic visual metaphors
+      const thirds = `
+        <rect x="80" y="160" width="740" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+        <path d="M326 160v300M574 160v300M80 260h740M80 360h740" stroke="#e2e8f0" opacity="0.35" stroke-width="4"/>
+        <circle cx="574" cy="260" r="18" fill="${c1}" opacity="0.95"/>
+      `;
+      const dutch = `
+        <g transform="translate(120 170) rotate(-12 330 150)">
+          <rect x="0" y="0" width="660" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+          <path d="M20 250h620" stroke="#e2e8f0" opacity="0.35" stroke-width="6"/>
+          <circle cx="470" cy="150" r="26" fill="${c2}" opacity="0.95"/>
+        </g>
+      `;
+      const rim = `
+        <rect x="80" y="160" width="740" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+        <circle cx="450" cy="320" r="92" fill="#0b1220" opacity="0.8"/>
+        <circle cx="450" cy="320" r="110" fill="${c1}" opacity="0.22" filter="url(#blur)"/>
+        <path d="M365 245c40-35 130-35 170 0" stroke="${c2}" opacity="0.9" stroke-width="10" stroke-linecap="round"/>
+      `;
+      const bokeh = `
+        <rect x="80" y="160" width="740" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+        <g opacity="0.75">
+          <circle cx="210" cy="270" r="42" fill="${c1}" opacity="0.35"/>
+          <circle cx="280" cy="330" r="64" fill="${c2}" opacity="0.28"/>
+          <circle cx="660" cy="280" r="56" fill="${c1}" opacity="0.22"/>
+          <circle cx="590" cy="360" r="36" fill="${c2}" opacity="0.25"/>
+        </g>
+        <circle cx="450" cy="330" r="70" fill="#0b1220" opacity="0.75"/>
+        <circle cx="450" cy="330" r="8" fill="${c1}" opacity="0.9"/>
+      `;
+      const grain = `
+        <rect x="80" y="160" width="740" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+        <g opacity="0.26">
+          ${Array.from({length:180}).map((_,i)=>{
+            const x = 100 + (i*37)%700;
+            const y = 170 + (i*53)%280;
+            const r = 1 + (i%3);
+            return `<circle cx="${x}" cy="${y}" r="${r}" fill="#e2e8f0"/>`;
+          }).join('')}
+        </g>
+        <rect x="120" y="210" width="660" height="200" rx="18" fill="url(#g)" opacity="0.12"/>
+      `;
+
+      const id = t.id;
+      if (id === 'rule-of-thirds') return [card('Rule of thirds grid', thirds)];
+      if (id === 'dutch-angle') return [card('Tilted horizon', dutch)];
+      if (id === 'rim-light') return [card('Edge highlight / separation', rim)];
+      if (id === 'bokeh' || id === 'depth-of-field') return [card('Out-of-focus highlights', bokeh)];
+      if (id === 'film-grain') return [card('Organic texture', grain)];
+
+      // Default: a category-themed “concept card”
+      const generic = `
+        <rect x="80" y="160" width="740" height="300" rx="22" fill="#0b1220" opacity="0.55"/>
+        <path d="M120 400c120-160 210 40 330-80s210 50 330-110" stroke="url(#g)" stroke-width="10" opacity="0.9" fill="none" stroke-linecap="round"/>
+        <circle cx="680" cy="250" r="44" fill="${c2}" opacity="0.20" filter="url(#blur)"/>
+        <circle cx="240" cy="290" r="66" fill="${c1}" opacity="0.16" filter="url(#blur)"/>
+      `;
+      return [card(`${t.category} cue`, generic)];
+    }
+
+    function renderVisuals(t) {
+      if (!els.visualGrid) return;
+      els.visualGrid.innerHTML = '';
+      if (!t) return;
+
+      const builtIn = builtInVisualsFor(t);
+      const userImgs = getImagesFor(t.id);
+
+      const makeCard = ({src, label, kind, onRemove}) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'group overflow-hidden rounded-xl border border-white/10 bg-slate-950/40';
+        wrap.innerHTML = `
+          <div class="relative">
+            <img src="${src}" alt="${label}" class="h-40 w-full object-cover" />
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+              <div class="flex items-center justify-between gap-2">
+                <div class="text-xs text-slate-200 font-semibold truncate">${label}</div>
+                <div class="text-[10px] rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-slate-200">${kind}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        if (onRemove) {
+          const btn = document.createElement('button');
+          btn.className = 'm-3 text-xs rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10';
+          btn.textContent = 'Remove';
+          btn.addEventListener('click', onRemove);
+          wrap.appendChild(btn);
+        }
+        return wrap;
+      };
+
+      builtIn.forEach(v => {
+        els.visualGrid.appendChild(makeCard({src: v.src, label: v.label, kind: 'Built-in'}));
+      });
+
+      userImgs.forEach((img, idx) => {
+        els.visualGrid.appendChild(makeCard({
+          src: img.dataUrl,
+          label: 'Your image',
+          kind: 'Yours',
+          onRemove: () => {
+            const map = getImagesMap();
+            const arr = Array.isArray(map[t.id]) ? map[t.id] : [];
+            arr.splice(idx, 1);
+            if (arr.length) map[t.id] = arr; else delete map[t.id];
+            setImagesMap(map);
+            renderVisuals(t);
+            toast('Removed image');
+          }
+        }));
+      });
+
+      if (!builtIn.length && !userImgs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'text-sm text-slate-400';
+        empty.textContent = 'No visuals available.';
+        els.visualGrid.appendChild(empty);
+      }
+    }
+
+    function matches(term, q) {
+      if (!q) return true;
+      const hay = [term.term, term.category, term.oneLiner, term.what, term.why, term.how, ...(term.tags||[])].join(' ').toLowerCase();
+      return hay.includes(q);
+    }
+
+    function filteredTerms() {
+      const q = normalize(els.search.value);
+      return TERMS
+        .filter(t => activeCategory === 'All' ? true : t.category === activeCategory)
+        .filter(t => matches(t, q))
+        .sort((a,b) => a.term.localeCompare(b.term));
+    }
+
+    function chipButton(label, isActive) {
+      const btn = document.createElement('button');
+      btn.className = `rounded-full px-3 py-1.5 text-xs border transition ${isActive ? 'bg-sky-500/20 border-sky-400/40 text-slate-100' : 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'}`;
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        activeCategory = label;
+        keyboardIndex = 0;
+        render();
+      });
+      return btn;
+    }
+
+    function renderChips() {
+      els.chips.innerHTML = '';
+      CATEGORIES.forEach(c => els.chips.appendChild(chipButton(c, c === activeCategory)));
+    }
+
+    function listItem(term, isActive) {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = `w-full text-left px-4 py-3 hover:bg-white/5 transition ${isActive ? 'bg-white/5' : ''}`;
+      btn.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold text-slate-100 text-sm">${term.term}</div>
+            <div class="mt-1 text-xs text-slate-400">${term.category} • ${(term.tags||[]).slice(0,3).join(' · ')}</div>
+          </div>
+          <span class="text-xs rounded-full border border-white/10 bg-slate-900/50 px-2 py-1 text-slate-300">What/Why/How</span>
+        </div>
+      `;
+      btn.addEventListener('click', () => selectTerm(term.id, true));
+      li.appendChild(btn);
+      return li;
+    }
+
+    function renderList() {
+      const items = filteredTerms();
+      els.count.textContent = String(items.length);
+      els.list.innerHTML = '';
+      items.forEach((t, idx) => {
+        els.list.appendChild(listItem(t, t.id === activeId));
+        if (t.id === activeId) keyboardIndex = idx;
+      });
+      if (!items.find(t => t.id === activeId)) {
+        // Keep selection if possible; otherwise clear
+        activeId = items[0]?.id || null;
+        if (activeId) renderDetail(findById(activeId));
+      }
+    }
+
+    function tagPills(tags) {
+      if (!tags || !tags.length) return '';
+      return tags.map(t => `<span class="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-1 text-xs text-slate-200">${t}</span>`).join('');
+    }
+
+    function findById(id) {
+      return TERMS.find(t => t.id === id) || null;
+    }
+
+    function renderDetail(t) {
+      if (!t) {
+        els.detailTitle.textContent = 'Select a term';
+        els.detailCategory.classList.add('hidden');
+        els.detailOneLiner.textContent = 'Use the list on the left or search to explore terminology used in AI image generation & photography.';
+        els.detailWhat.textContent = '—';
+        els.detailWhy.textContent = '—';
+        els.detailHow.textContent = '—';
+        els.detailExamples.innerHTML = '';
+        els.detailMistakes.innerHTML = '';
+        els.detailRelated.innerHTML = '';
+        return;
+      }
+      activeId = t.id;
+
+      els.detailTitle.textContent = t.term || 'Untitled term';
+      els.detailCategory.textContent = t.category || '';
+      els.detailCategory.classList.toggle('hidden', !t.category);
+
+      // tags next to title (as small pills)
+      // Keep the placeholder element and just update its contents to avoid breaking references.
+      els.detailTags.className = 'flex flex-wrap gap-2';
+      els.detailTags.innerHTML = tagPills(t.tags);
+      els.detailTags.classList.toggle('hidden', !(t.tags && t.tags.length));
+
+      els.detailOneLiner.textContent = t.oneLiner || '';
+      els.detailWhat.textContent = t.what || '';
+      els.detailWhy.textContent = t.why || '';
+      els.detailHow.textContent = t.how || '';
+
+      els.detailExamples.innerHTML = '';
+      (t.examples || []).forEach(ex => {
+        const li = document.createElement('li');
+        li.textContent = ex;
+        els.detailExamples.appendChild(li);
+      });
+
+      els.detailMistakes.innerHTML = '';
+      (t.mistakes || []).forEach(m => {
+        const li = document.createElement('li');
+        li.textContent = m;
+        els.detailMistakes.appendChild(li);
+      });
+
+      els.detailRelated.innerHTML = '';
+      (t.related || []).forEach(rid => {
+        const rt = findById(rid);
+        const label = rt ? rt.term : rid;
+        const b = document.createElement('button');
+        b.className = 'rounded-full px-3 py-1.5 text-xs border border-white/10 bg-white/5 hover:bg-white/10 transition';
+        b.textContent = label;
+        b.addEventListener('click', () => {
+          if (rt) {
+            activeCategory = 'All';
+            renderChips();
+            render();
+            selectTerm(rt.id, true);
+          } else {
+            toast('Related term not found in glossary');
+          }
+        });
+        els.detailRelated.appendChild(b);
+      });
+
+      // visuals
+      renderVisuals(t);
+
+      // update URL
+      const url = new URL(window.location);
+      url.searchParams.set('term', t.id);
+      history.replaceState(null, '', url);
+
+      // rerender list highlight
+      renderList();
+      updateSaveButton();
+    }
+
+    function selectTerm(id, scrollIntoView) {
+      const t = findById(id);
+      if (!t) return;
+      renderDetail(t);
+      if (scrollIntoView) {
+        // scroll list item into view
+        const items = Array.from(els.list.querySelectorAll('li'));
+        const idx = filteredTerms().findIndex(x => x.id === id);
+        const li = items[idx];
+        li?.scrollIntoView({block:'nearest'});
+      }
+    }
+
+    function renderSaved() {
+      const saved = getSaved();
+      els.savedWrap.innerHTML = '';
+      if (!saved.length) {
+        const p = document.createElement('div');
+        p.className = 'text-sm text-slate-400';
+        p.textContent = 'No saved terms yet. Select a term and click “Save”.';
+        els.savedWrap.appendChild(p);
+        return;
+      }
+      saved
+        .map(id => findById(id))
+        .filter(Boolean)
+        .forEach(t => {
+          const b = document.createElement('button');
+          b.className = 'rounded-full px-3 py-1.5 text-xs border border-white/10 bg-white/5 hover:bg-white/10';
+          b.textContent = t.term;
+          b.addEventListener('click', () => {
+            activeCategory = 'All';
+            renderChips();
+            render();
+            selectTerm(t.id, true);
+          });
+          els.savedWrap.appendChild(b);
+        });
+    }
+
+    function updateSaveButton() {
+      const saved = new Set(getSaved());
+      const isSaved = activeId && saved.has(activeId);
+      els.bookmarkBtn.textContent = isSaved ? 'Saved' : 'Save';
+      els.bookmarkBtn.classList.toggle('bg-emerald-500/15', isSaved);
+      els.bookmarkBtn.classList.toggle('border-emerald-400/30', isSaved);
+      els.bookmarkBtn.classList.toggle('bg-white/10', !isSaved);
+      els.bookmarkBtn.classList.toggle('border-white/10', !isSaved);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('Copied to clipboard');
+      } catch {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        toast('Copied');
+      }
+    }
+
+    function currentTerm() {
+      return activeId ? findById(activeId) : null;
+    }
+
+    function render() {
+      renderChips();
+      renderList();
+      renderSaved();
+    }
+
+    // Events
+    els.search.addEventListener('input', () => {
+      keyboardIndex = 0;
+      renderList();
+    });
+
+    els.randomBtn.addEventListener('click', () => {
+      const items = filteredTerms();
+      if (!items.length) return;
+      const t = items[Math.floor(Math.random() * items.length)];
+      selectTerm(t.id, true);
+      toast('Random term selected');
+    });
+
+    els.copyBtn.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      copyText(t.how || '');
+    });
+
+    els.copyExamplesBtn.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      copyText((t.examples || []).join('\n'));
+    });
+
+    els.bookmarkBtn.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      const saved = getSaved();
+      const set = new Set(saved);
+      if (set.has(t.id)) {
+        set.delete(t.id);
+        toast('Removed from saved');
+      } else {
+        set.add(t.id);
+        toast('Saved');
+      }
+      setSaved(Array.from(set));
+      updateSaveButton();
+    });
+
+    els.clearSavedBtn.addEventListener('click', () => {
+      setSaved([]);
+      updateSaveButton();
+      toast('Saved cleared');
+    });
+
+    els.shareBtn.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      const url = new URL(window.location);
+      url.searchParams.set('term', t.id);
+      copyText(url.toString());
+    });
+
+    els.buildPromptBtn.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      const subject = (els.subject.value || '').trim() || 'portrait of a person';
+      const env = (els.environment.value || '').trim();
+      const cons = (els.constraints.value || '').trim();
+      const pieces = [];
+      pieces.push(subject);
+      if (env) pieces.push(`in ${env}`);
+      pieces.push(t.examples?.[0] || t.term);
+      // include a small, safe negative suggestion
+      const neg = 'Negative: text, watermark, logo, lowres, blurry';
+      if (cons) pieces.push(cons);
+      pieces.push(neg);
+      els.fullPrompt.value = pieces.join(', ');
+      toast('Prompt generated');
+    });
+
+    els.copyFullPromptBtn.addEventListener('click', () => {
+      copyText(els.fullPrompt.value || '');
+    });
+
+    els.clearPromptBtn.addEventListener('click', () => {
+      els.subject.value = '';
+      els.environment.value = '';
+      els.constraints.value = '';
+      els.fullPrompt.value = '';
+      toast('Cleared');
+    });
+
+    // Visual uploads (stored locally per term)
+    els.uploadImg?.addEventListener('change', async (e) => {
+      const t = currentTerm();
+      const file = e.target.files && e.target.files[0];
+      if (!t) {
+        toast('Select a term first');
+        e.target.value = '';
+        return;
+      }
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        toast('Please choose an image');
+        e.target.value = '';
+        return;
+      }
+      // Keep uploads lightweight to avoid blowing up localStorage.
+      const toDataUrl = (f) => new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(f);
+      });
+
+      let dataUrl = await toDataUrl(file);
+      const MAX_CHARS = 420_000; // ~0.4MB-ish in base64 string
+      if (dataUrl.length > MAX_CHARS) {
+        toast('Image is large—try a smaller one');
+        e.target.value = '';
+        return;
+      }
+      addImageFor(t.id, dataUrl);
+      renderVisuals(t);
+      toast('Image added');
+      e.target.value = '';
+    });
+
+    els.clearImagesBtn?.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first');
+      clearImagesFor(t.id);
+      renderVisuals(t);
+      toast('Cleared your images for this term');
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== els.search) {
+        e.preventDefault();
+        els.search.focus();
+        return;
+      }
+      const items = filteredTerms();
+      if (!items.length) return;
+
+      if (e.key === 'ArrowDown') {
+        if (document.activeElement === els.search || document.activeElement === document.body) {
+          e.preventDefault();
+          keyboardIndex = Math.min(items.length - 1, keyboardIndex + 1);
+          selectTerm(items[keyboardIndex].id, true);
+        }
+      }
+      if (e.key === 'ArrowUp') {
+        if (document.activeElement === els.search || document.activeElement === document.body) {
+          e.preventDefault();
+          keyboardIndex = Math.max(0, keyboardIndex - 1);
+          selectTerm(items[keyboardIndex].id, true);
+        }
+      }
+      if (e.key === 'Enter') {
+        if (document.activeElement === els.search) {
+          e.preventDefault();
+          selectTerm(items[keyboardIndex].id, true);
+        }
+      }
+    });
+
+    // -----------------------------
+    // Tabs
+    // -----------------------------
+    function setTab(tab) {
+      const isExplore = tab === 'explore';
+      els.tabExplore?.classList.toggle('hidden', !isExplore);
+      els.tabEdit?.classList.toggle('hidden', isExplore);
+      els.tabBtns.forEach(b => {
+        const active = b.getAttribute('data-tab') === tab;
+        b.classList.toggle('bg-white/10', active);
+        b.classList.toggle('bg-white/5', !active);
+      });
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tab);
+      history.replaceState(null, '', url);
+    }
+
+    els.tabBtns.forEach(b => b.addEventListener('click', () => setTab(b.getAttribute('data-tab'))));
+
+    // -----------------------------
+    // Edit tab (local, non-generative)
+    // -----------------------------
+    const editState = {
+      img: null,
+      naturalW: 0,
+      naturalH: 0,
+      params: {
+        brightness: 0,
+        contrast: 0,
+        saturation: 0,
+        warmth: 0,
+        grain: 0,
+        vignette: 0,
+        blur: 0,
+        sharpen: 0
+      }
+    };
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function parsePromptToParams(prompt) {
+      const p = normalize(prompt);
+      const out = { ...editState.params };
+
+      const add = (k, v) => out[k] = clamp((out[k] || 0) + v, k === 'blur' ? 0 : -999, 999);
+
+      if (p.includes('cinematic')) { add('contrast', 18); add('saturation', -6); add('vignette', 22); }
+      if (p.includes('low-key') || p.includes('noir')) { add('brightness', -12); add('contrast', 22); add('saturation', -10); add('vignette', 28); }
+      if (p.includes('high-key') || p.includes('airy')) { add('brightness', 14); add('contrast', -8); add('saturation', 6); }
+      if (p.includes('film grain') || p.includes('grain')) { add('grain', 14); }
+      if (p.includes('halation') || p.includes('bloom')) { add('blur', 1.2); add('brightness', 6); }
+      if (p.includes('vignette')) { add('vignette', 18); }
+      if (p.includes('warm') || p.includes('tungsten') || p.includes('golden')) { add('warmth', 16); }
+      if (p.includes('cool') || p.includes('blue hour')) { add('warmth', -14); }
+      if (p.includes('teal and orange') || (p.includes('teal') && p.includes('orange'))) { add('warmth', 10); add('contrast', 12); }
+      if (p.includes('sharp') || p.includes('crispy')) { add('sharpen', 10); }
+      if (p.includes('soft') || p.includes('dreamy')) { add('blur', 1.0); add('contrast', -6); }
+
+      // cap ranges
+      out.brightness = clamp(out.brightness, -40, 40);
+      out.contrast = clamp(out.contrast, -40, 60);
+      out.saturation = clamp(out.saturation, -60, 60);
+      out.warmth = clamp(out.warmth, -40, 40);
+      out.grain = clamp(out.grain, 0, 35);
+      out.vignette = clamp(out.vignette, 0, 60);
+      out.blur = clamp(out.blur, 0, 8);
+      out.sharpen = clamp(out.sharpen, 0, 25);
+      return out;
+    }
+
+    function updatePromptChips(prompt) {
+      if (!els.promptChips) return;
+      const p = normalize(prompt);
+      const cues = [];
+      const add = (label) => cues.push(label);
+      if (p.includes('cinematic')) add('cinematic');
+      if (p.includes('low-key') || p.includes('noir')) add('low-key/noir');
+      if (p.includes('high-key') || p.includes('airy')) add('high-key/airy');
+      if (p.includes('film grain') || p.includes('grain')) add('grain');
+      if (p.includes('vignette')) add('vignette');
+      if (p.includes('warm') || p.includes('tungsten') || p.includes('golden')) add('warm');
+      if (p.includes('cool') || p.includes('blue hour')) add('cool');
+      if (p.includes('teal') && p.includes('orange')) add('teal/orange');
+      if (p.includes('halation') || p.includes('bloom')) add('bloom/halation');
+      if (p.includes('sharp') || p.includes('crispy')) add('sharpen');
+      if (p.includes('soft') || p.includes('dreamy')) add('soft');
+
+      els.promptChips.innerHTML = '';
+      if (!cues.length) {
+        const d = document.createElement('div');
+        d.className = 'text-sm text-slate-400';
+        d.textContent = 'No cues detected yet.';
+        els.promptChips.appendChild(d);
+        return;
+      }
+      cues.forEach(c => {
+        const b = document.createElement('span');
+        b.className = 'inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-1 text-xs text-slate-200';
+        b.textContent = c;
+        els.promptChips.appendChild(b);
+      });
+    }
+
+    function applySlidersToUI() {
+      const p = editState.params;
+      if (!els.sliders.brightness) return;
+      els.sliders.brightness.value = String(p.brightness);
+      els.sliders.contrast.value = String(p.contrast);
+      els.sliders.saturation.value = String(p.saturation);
+      els.sliders.warmth.value = String(p.warmth);
+      els.sliders.grain.value = String(p.grain);
+      els.sliders.vignette.value = String(p.vignette);
+      els.sliders.blur.value = String(p.blur);
+      els.sliders.sharpen.value = String(p.sharpen);
+
+      els.sliderVals.bVal.textContent = String(p.brightness);
+      els.sliderVals.cVal.textContent = String(p.contrast);
+      els.sliderVals.sVal.textContent = String(p.saturation);
+      els.sliderVals.wVal.textContent = String(p.warmth);
+      els.sliderVals.gVal.textContent = String(p.grain);
+      els.sliderVals.vVal.textContent = String(p.vignette);
+      els.sliderVals.blVal.textContent = String(p.blur);
+      els.sliderVals.shVal.textContent = String(p.sharpen);
+    }
+
+    function drawEdited() {
+      const canvas = els.editCanvas;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const img = editState.img;
+      if (!img) {
+        // empty state
+        const w = canvas.width = 1200;
+        const h = canvas.height = 680;
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle = 'rgba(2,6,23,0.65)';
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle = 'rgba(148,163,184,0.9)';
+        ctx.font = '28px ui-sans-serif, system-ui';
+        ctx.fillText('Upload an image to start', 60, 90);
+        ctx.font = '18px ui-sans-serif, system-ui';
+        ctx.fillStyle = 'rgba(148,163,184,0.8)';
+        ctx.fillText('Then type a prompt like: “cinematic, warm tones, film grain, vignette”', 60, 125);
+        return;
+      }
+
+      // Fit canvas to container width while keeping reasonable max size
+      const cssW = canvas.clientWidth || 900;
+      const targetW = Math.min(1400, Math.max(700, Math.floor(cssW * devicePixelRatio)));
+      const scale = targetW / editState.naturalW;
+      const targetH = Math.floor(editState.naturalH * scale);
+      canvas.width = targetW;
+      canvas.height = targetH;
+
+      const p = editState.params;
+
+      // Base draw with canvas filter (brightness/contrast/saturation/blur)
+      const b = 100 + p.brightness;
+      const c = 100 + p.contrast;
+      const s = 100 + p.saturation;
+      ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${p.blur}px)`;
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      ctx.filter = 'none';
+
+      // Warmth (simple red/blue overlay)
+      if (p.warmth !== 0) {
+        const amt = Math.abs(p.warmth) / 40;
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.fillStyle = p.warmth > 0
+          ? `rgba(255, 160, 80, ${0.30 * amt})`
+          : `rgba(80, 140, 255, ${0.30 * amt})`;
+        ctx.fillRect(0, 0, targetW, targetH);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      // Vignette
+      if (p.vignette > 0) {
+        const v = p.vignette / 60;
+        const grad = ctx.createRadialGradient(
+          targetW/2, targetH/2, Math.min(targetW, targetH) * 0.25,
+          targetW/2, targetH/2, Math.max(targetW, targetH) * 0.70
+        );
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, `rgba(0,0,0,${0.65 * v})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, targetW, targetH);
+      }
+
+      // Grain
+      if (p.grain > 0) {
+        const g = p.grain / 35;
+        const imageData = ctx.getImageData(0,0,targetW,targetH);
+        const d = imageData.data;
+        // Sparse noise for perf
+        for (let i = 0; i < d.length; i += 4) {
+          if ((i/4) % 5 !== 0) continue;
+          const n = (Math.random() - 0.5) * 55 * g;
+          d[i] = clamp(d[i] + n, 0, 255);
+          d[i+1] = clamp(d[i+1] + n, 0, 255);
+          d[i+2] = clamp(d[i+2] + n, 0, 255);
+        }
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      // Sharpen (simple unsharp mask-ish)
+      if (p.sharpen > 0) {
+        const amt = p.sharpen / 25;
+        // draw blurred copy
+        const off = document.createElement('canvas');
+        off.width = targetW;
+        off.height = targetH;
+        const octx = off.getContext('2d');
+        octx.filter = 'blur(2px)';
+        octx.drawImage(canvas, 0, 0);
+        octx.filter = 'none';
+
+        // subtract blend approximation: overlay sharpen by increasing local contrast
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.globalAlpha = 0.55 * amt;
+        ctx.drawImage(off, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+
+    function resetEdit() {
+      editState.params = {
+        brightness: 0, contrast: 0, saturation: 0, warmth: 0,
+        grain: 0, vignette: 0, blur: 0, sharpen: 0
+      };
+      applySlidersToUI();
+      updatePromptChips(els.editPrompt?.value || '');
+      drawEdited();
+    }
+
+    // Slider events
+    Object.entries(els.sliders).forEach(([k, input]) => {
+      input?.addEventListener('input', () => {
+        editState.params[k] = Number(input.value);
+        const labelMap = {
+          brightness: 'bVal', contrast: 'cVal', saturation: 'sVal', warmth: 'wVal',
+          grain: 'gVal', vignette: 'vVal', blur: 'blVal', sharpen: 'shVal'
+        };
+        const lab = els.sliderVals[labelMap[k]];
+        if (lab) lab.textContent = String(editState.params[k]);
+        drawEdited();
+      });
+    });
+
+    els.applyPromptBtn?.addEventListener('click', () => {
+      if (!editState.img) return toast('Upload an image first');
+      const prompt = els.editPrompt?.value || '';
+      editState.params = parsePromptToParams(prompt);
+      applySlidersToUI();
+      updatePromptChips(prompt);
+      drawEdited();
+      toast('Applied prompt');
+    });
+
+    els.copyEditPromptFromTermBtn?.addEventListener('click', () => {
+      const t = currentTerm();
+      if (!t) return toast('Select a term first (Explore tab)');
+      const prev = (els.editPrompt?.value || '').trim();
+      const next = (t.how || '').trim();
+      els.editPrompt.value = prev ? (prev + (prev.endsWith(',') ? ' ' : ', ') + next) : next;
+      updatePromptChips(els.editPrompt.value);
+      toast('Inserted');
+    });
+
+    els.editPrompt?.addEventListener('input', () => updatePromptChips(els.editPrompt.value));
+
+    els.editResetBtn?.addEventListener('click', () => {
+      resetEdit();
+      toast('Reset');
+    });
+
+    els.editDownloadBtn?.addEventListener('click', () => {
+      if (!editState.img) return toast('Nothing to download');
+      const a = document.createElement('a');
+      a.download = 'edited.png';
+      a.href = els.editCanvas.toDataURL('image/png');
+      a.click();
+    });
+
+    els.editUpload?.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        toast('Please choose an image');
+        e.target.value = '';
+        return;
+      }
+      const toDataUrl = (f) => new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(f);
+      });
+      const dataUrl = await toDataUrl(file);
+      const img = new Image();
+      img.onload = () => {
+        editState.img = img;
+        editState.naturalW = img.naturalWidth || img.width;
+        editState.naturalH = img.naturalHeight || img.height;
+        resetEdit();
+        toast('Image loaded');
+      };
+      img.src = dataUrl;
+      e.target.value = '';
+    });
+
+    // Redraw on resize (fit-to-width)
+    window.addEventListener('resize', () => {
+      if (els.tabEdit && !els.tabEdit.classList.contains('hidden')) drawEdited();
+    });
+
+    // -----------------------------
+    // Initial render + deep link
+    // -----------------------------
+    render();
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get('term');
+    const fallback = filteredTerms()[0]?.id;
+    selectTerm(initial && findById(initial) ? initial : (fallback || TERMS[0].id), false);
+
+    const initialTab = params.get('tab') || 'explore';
+    setTab(initialTab === 'edit' ? 'edit' : 'explore');
+    updatePromptChips('');
+    drawEdited();
+  </script>
+</body>
+</html>
